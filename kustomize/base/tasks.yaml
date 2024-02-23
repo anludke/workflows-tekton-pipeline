@@ -5,7 +5,7 @@ metadata:
   namespace: sonataflow-infra
 spec:
   workspaces:
-    - name: shared
+    - name: workflow-source
   params:
     - name: workflowId
       description: The workflow ID from the repository
@@ -17,7 +17,7 @@ spec:
   steps:
     - name: flatten
       image: registry.access.redhat.com/ubi9-minimal
-      workingDir: $(workspaces.shared.path)
+      workingDir: $(workspaces.workflow-source.path)
       script: |
         echo "--pwd"
         pwd
@@ -34,6 +34,8 @@ spec:
           cp -r workflow/$(params.workflowId) flat/$(params.workflowId)
         fi
 
+        curl -L https://raw.githubusercontent.com/parodos-dev/serverless-workflows/main/pipeline/workflow-builder.Dockerfile -o flat/workflow-builder.Dockerfile
+
         echo "--ls /workspace"
         ls /workspace
         echo "--ls /workspace/*"
@@ -48,7 +50,7 @@ metadata:
   namespace: sonataflow-infra
 spec:
   workspaces:
-    - name: shared
+    - name: workflow-source
   params:
     - name: workflowId
       description: The workflow ID from the repository
@@ -56,7 +58,7 @@ spec:
   steps:
     - name: build-manifests
       image: registry.access.redhat.com/ubi9-minimal
-      workingDir: $(workspaces.shared.path)/flat/$(params.workflowId)
+      workingDir: $(workspaces.workflow-source.path)/flat/$(params.workflowId)
       script: |
         echo "--pwd"
         pwd
@@ -76,7 +78,9 @@ metadata:
   namespace: sonataflow-infra
 spec:
   workspaces:
-    - name: shared
+    - name: workflow-source
+    - name: kustomize-template
+    - name: workflow-kustomize
   params:
     - name: workflowId
       description: The workflow ID from the repository
@@ -86,7 +90,7 @@ spec:
   steps:
     - name: build-kustomize
       image: registry.access.redhat.com/ubi9-minimal
-      workingDir: $(workspaces.shared.path)/deployment
+      workingDir: $(workspaces.kustomize-template.path)
       script: |
         echo "--pwd"
         pwd
@@ -94,14 +98,16 @@ spec:
         ls
         echo "--ls .."
         ls ..
-        cp ../flat/$(params.workflowId)/manifests/* kustomize/base
+        cp $(workspaces.workflow-source.path)/flat/$(params.workflowId)/manifests/* kustomize/base
         echo "--ls kustomize/base"
         ls kustomize/base
         microdnf install -y findutils && microdnf clean all
         ./updater.sh $(params.workflowId) $(params.imageTag)
 
-        echo "--cat kustomize/base/kustomization.yaml"
-        cat kustomize/base/kustomization.yaml
-        echo "--ls kustomize/base"
-        ls kustomize/base
+        cp -R kustomize $(workspaces.workflow-kustomize.path)
+
+        echo "--cat $(workspaces.workflow-kustomize.path)/kustomize/base/kustomization.yaml"
+        cat $(workspaces.workflow-kustomize.path)/kustomize/base/kustomization.yaml
+        echo "--ls $(workspaces.workflow-kustomize.path)/kustomize/base"
+        ls $(workspaces.workflow-kustomize.path)/kustomize/base
 ---

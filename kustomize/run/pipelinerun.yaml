@@ -6,7 +6,23 @@ spec:
   pipelineRef:
     name: workflow-deployment
   workspaces:
-    - name: shared
+    - name: workflow-source
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+    - name: kustomize-template
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+    - name: workflow-kustomize
       volumeClaimTemplate:
         spec:
           accessModes:
