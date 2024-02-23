@@ -57,8 +57,9 @@ oc create secret -n sonataflow-infra generic git-ssh-credentials \
 of the [config](./ssh/config) file
 
 ## Pipeline parameters
+
 | Name | Description | Default |
-|======|=============|=========|
+|------|-------------|---------|
 |`gitUrl`|The https URL of the repository to clone|**provided**|
 |`sshGitUrl`|The SSH URL of the repository to clone|**provided**|
 |`workflowId`|The workflow ID from the repository (must match the folder name)|**provided**|
