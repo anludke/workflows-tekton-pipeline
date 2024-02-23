@@ -38,7 +38,7 @@ Follow these steps to properly configure the credentials in the namespace:
 ssh-keygen -t rsa -b 4096 -f ssh/id_rsa -N "" -C git@github.com -q
 ```
 * Add the SSH key to your GitHub account using the `gh` CLI or using the [SSH keys](https://github.com/settings/keys) service:
-  ```bash
+```bash
 gh ssh-key add ssh/id_rsa.pub --title "Tekton pipeline"
 ```
 * Create a `known_hosts` file by scanning the 
@@ -80,8 +80,12 @@ kustomize build kustomize/base | oc apply -f -
 
 Run the pipeline for a specific configuration, as defined in [run.properties](./kustomize/run/run.properties):
 ```bash
+cd kustomize/run
+kustomize edit set namesuffix $(( RANDOM % 100 ))
+cd ../..
 kustomize build kustomize/run | oc apply -f -
 ```
+The above will create the `PipelineRun` with a random name because these instances are immutable and cannot be updated after they were created.
 
 ## Uninstall
 Delete all the Tekton esources:

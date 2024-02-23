@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
-  generateName: workflow-deployment-run-
+  name: workflow-deployment-run-
 spec:
   pipelineRef:
     name: workflow-deployment

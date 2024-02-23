@@ -44,7 +44,7 @@ spec:
 apiVersion: tekton.dev/v1
 kind: Task
 metadata:
-  name: gen-manifests
+  name: build-manifests
   namespace: sonataflow-infra
 spec:
   workspaces:
@@ -54,7 +54,7 @@ spec:
       description: The workflow ID from the repository
       type: string
   steps:
-    - name: gen-manifests
+    - name: build-manifests
       image: registry.access.redhat.com/ubi9-minimal
       workingDir: $(workspaces.shared.path)/flat/$(params.workflowId)
       script: |
@@ -72,7 +72,7 @@ spec:
 apiVersion: tekton.dev/v1
 kind: Task
 metadata:
-  name: gen-kustomize
+  name: build-kustomize
   namespace: sonataflow-infra
 spec:
   workspaces:
@@ -84,7 +84,7 @@ spec:
     - name: imageTag
       type: string
   steps:
-    - name: gen-kustomize
+    - name: build-kustomize
       image: registry.access.redhat.com/ubi9-minimal
       workingDir: $(workspaces.shared.path)/deployment
       script: |
