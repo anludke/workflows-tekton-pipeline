@@ -46,7 +46,7 @@ spec:
           workspace: kustomize-template
       params:
         - name: url
-          value: https://github.com/dmartinol/workflow-cd-template.git
+          value: https://github.com/parodos-dev/workflow-kustomize-template.git
     - name: flatten-workflow
       runAfter: ["fetch-workflow"]
       taskRef:
