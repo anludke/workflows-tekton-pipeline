@@ -1,0 +1,150 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: workflow-deployment
+spec:
+  description: |
+    This pipeline clones a git repo, builds a Docker image with Kaniko and
+    pushes it to a registry
+  params:
+    - name: gitUrl
+      description: The https URL of the repository to clone
+      type: string
+    - name: sshGitUrl
+      description: The SSH URL of the repository to clone
+      type: string
+    - name: workflowId
+      description: The workflow ID from the repository
+      type: string
+    - name: convertToFlat
+      description: Whether conversion to flat layout is needed or it's already flattened
+      type: string
+      default: "true"
+  workspaces:
+    - name: shared
+    - name: ssh-creds
+    - name: docker-credentials
+  tasks:
+    - name: fetch-source
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared
+      params:
+        - name: url
+          value: $(params.gitUrl)
+        - name: subdirectory
+          value: workflow
+    - name: fetch-cd-template
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared
+      params:
+        - name: url
+          value: https://github.com/dmartinol/workflow-cd-template.git
+        - name: subdirectory
+          value: deployment
+    - name: flatten-workflow
+      runAfter: ["fetch-source"]
+      taskRef:
+        name: flattener
+      workspaces:
+        - name: shared
+          workspace: shared
+      params:
+        - name: workflowId
+          value: $(params.workflowId)
+        - name: convertToFlat
+          value: $(params.convertToFlat)
+    - name: gen-manifests
+      runAfter: ["flatten-workflow"]
+      taskRef:
+        name: gen-manifests
+      workspaces:
+        - name: shared
+          workspace: shared
+      params:
+        - name: workflowId
+          value: $(params.workflowId)
+    - name: gen-kustomize
+      runAfter: ["gen-manifests", "fetch-cd-template"]
+      taskRef:
+        name: gen-kustomize
+      workspaces:
+        - name: shared
+          workspace: shared
+      params:
+        - name: workflowId
+          value: $(params.workflowId)
+        - name: imageTag
+          value: $(tasks.fetch-source.results.commit)
+    - name: fetch-ci-pipeline
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared
+      params:
+        - name: url
+          value: https://github.com/parodos-dev/serverless-workflows.git
+        - name: subdirectory
+          value: builder
+    - name: build-push
+      runAfter: ["flatten-workflow", "fetch-ci-pipeline"]
+      taskRef:
+        name: kaniko
+      workspaces:
+        - name: source
+          workspace: shared
+        - name: dockerconfig
+          workspace: docker-credentials
+      params:
+        - name: IMAGE
+          value: quay.io/orchestrator/serverless-workflow-$(params.workflowId):$(tasks.fetch-source.results.commit)
+        - name: DOCKERFILE
+          value: builder/pipeline/workflow-builder.Dockerfile
+        - name: CONTEXT
+          value: flat/$(params.workflowId)
+    - name: push-changes
+      runAfter: ["gen-kustomize", "build-push"]
+      taskRef:
+        name: git-cli
+      workspaces:
+        - name: source
+          workspace: shared
+        - name: ssh-directory
+          workspace: ssh-creds
+      params:
+        - name: GIT_USER_NAME
+          value: Parodos Tekton Pipeline
+        - name: GIT_USER_EMAIL
+          value: parodos@redhat.com
+        - name: USER_HOME
+          value: /home/git
+        - name: GIT_SCRIPT
+          value: |
+            eval "$(ssh-agent -s)"
+            ssh-add "${PARAM_USER_HOME}"/.ssh/id_rsa
+
+            git config --global --add safe.directory /workspace/source/updated
+            git clone $(params.sshGitUrl) updated
+            cd updated
+
+            COMMIT=$(git rev-parse --short=8 HEAD)
+            TIMESTAMP=$(date +"%Y-%m-%d_%H-%M")
+            BRANCH="deployment-$TIMESTAMP"
+            git checkout -b "$BRANCH"
+            git branch --set-upstream-to=origin/main "$BRANCH"
+            git status
+            git config --global --list
+            git push -u origin "$BRANCH"
+
+            rm -rf kustomize
+            cp -R ../deployment/kustomize .
+            git add kustomize
+            git commit -m "Deployment for $COMMIT"
+            git push origin "$BRANCH"
+---

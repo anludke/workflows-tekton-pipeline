@@ -1,0 +1,15 @@
+# apiVersion: tekton.dev/v1beta1
+# kind: Task
+# metadata:
+#   name: git-cli
+# spec:
+#   steps:
+#     - name: git
+#       securityContext:
+#         runAsNonRoot: true
+#         runAsUser: 65532
+- op: add
+  path: /spec/steps/0/securityContext
+  value:
+    runAsNonRoot: true
+    runAsUser: 65532

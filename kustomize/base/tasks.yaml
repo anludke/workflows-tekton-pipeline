@@ -1,0 +1,107 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: flattener
+  namespace: sonataflow-infra
+spec:
+  workspaces:
+    - name: shared
+  params:
+    - name: workflowId
+      description: The workflow ID from the repository
+      type: string
+    - name: convertToFlat
+      description: Whether conversion to flat layout is needed or it's already flattened
+      type: string
+      default: "true"
+  steps:
+    - name: flatten
+      image: registry.access.redhat.com/ubi9-minimal
+      workingDir: $(workspaces.shared.path)
+      script: |
+        echo "--pwd"
+        pwd
+        echo "--ls"
+        ls
+        echo "--ls /workspace/*"
+        ls /workspace/*
+        ROOT=/workspace/workflow
+        TARGET=flat
+        mkdir -p flat
+        if [ "$(params.convertToFlat)" == "true" ]; then
+          cp -r workflow/$(params.workflowId)/src/main/resources flat/$(params.workflowId)
+        else
+          cp -r workflow/$(params.workflowId) flat/$(params.workflowId)
+        fi
+
+        echo "--ls /workspace"
+        ls /workspace
+        echo "--ls /workspace/*"
+        ls /workspace/*
+        echo "--ls -l flat"
+        ls -l flat
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: gen-manifests
+  namespace: sonataflow-infra
+spec:
+  workspaces:
+    - name: shared
+  params:
+    - name: workflowId
+      description: The workflow ID from the repository
+      type: string
+  steps:
+    - name: gen-manifests
+      image: registry.access.redhat.com/ubi9-minimal
+      workingDir: $(workspaces.shared.path)/flat/$(params.workflowId)
+      script: |
+        echo "--pwd"
+        pwd
+        echo "--ls"
+        ls
+        curl -L https://github.com/rgolangh/kie-tools/releases/download/0.0.2/kn-workflow-linux-amd64 -o kn-workflow
+        chmod +x kn-workflow
+        echo "Installed kn-workflow"
+        ./kn-workflow gen-manifest --namespace ""
+        echo "--ls manifests"
+        ls manifests
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: gen-kustomize
+  namespace: sonataflow-infra
+spec:
+  workspaces:
+    - name: shared
+  params:
+    - name: workflowId
+      description: The workflow ID from the repository
+      type: string
+    - name: imageTag
+      type: string
+  steps:
+    - name: gen-kustomize
+      image: registry.access.redhat.com/ubi9-minimal
+      workingDir: $(workspaces.shared.path)/deployment
+      script: |
+        echo "--pwd"
+        pwd
+        echo "--ls"
+        ls
+        echo "--ls .."
+        ls ..
+        cp ../flat/$(params.workflowId)/manifests/* kustomize/base
+        echo "--ls kustomize/base"
+        ls kustomize/base
+        microdnf install -y findutils && microdnf clean all
+        ./updater.sh $(params.workflowId) $(params.imageTag)
+
+        echo "--cat kustomize/base/kustomization.yaml"
+        cat kustomize/base/kustomization.yaml
+        echo "--ls kustomize/base"
+        ls kustomize/base
+---

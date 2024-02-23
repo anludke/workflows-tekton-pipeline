@@ -1,0 +1,32 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: workflow-deployment-run-
+spec:
+  pipelineRef:
+    name: workflow-deployment
+  workspaces:
+    - name: shared
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+    - name: docker-credentials
+      secret:
+        secretName: docker-credentials
+    - name: ssh-creds
+      secret:
+        secretName: git-ssh-credentials
+  params:
+    - name: gitUrl
+      value: __PLACEHOLDER_
+    - name: sshGitUrl
+      value: __PLACEHOLDER_
+    - name: workflowId
+      value: __PLACEHOLDER_
+    - name: convertToFlat
+      value: __PLACEHOLDER_
+---
