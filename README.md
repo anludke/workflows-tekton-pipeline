@@ -62,6 +62,7 @@ of the [config](./ssh/config) file
 |------|-------------|---------|
 |`gitUrl`|The SSH URL of the repository to clone|**provided**|
 |`workflowId`|The workflow ID from the repository (must match the folder name)|**provided**|
+|`workflowId-listener`|**WILL BE AUTOMATED** The name of the `Service` for the created `EventListener`|**provided**, must be like `el-<workflowId>`|
 |`convertToFlat`|Whether conversion to flat layout is needed or it's already flattened|`true`|
 
 You can configure the execution parameters by changing the content of [run.properties](./kustomize/run/run.properties).
