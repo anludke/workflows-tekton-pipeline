@@ -2,7 +2,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - pipelinerun.yaml
+- trigger.yaml
+# - pipelinerun.yaml
 
 namespace: sonataflow-infra
 
@@ -10,8 +11,9 @@ generatorOptions:
   disableNameSuffixHash: true
 
 configMapGenerator:
-  - envs:
-      - run.properties
-    name: pipelinerun-properties
+- envs:
+  - run.properties
+  name: pipelinerun-properties
 transformers:
-  - replace-properties.yaml
+- replace-properties.yaml
+

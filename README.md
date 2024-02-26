@@ -77,19 +77,18 @@ Deploy the required Tekton tasks and pipeline:
 kustomize build kustomize/base | oc apply -f -
 ```
 
-Run the pipeline for a specific configuration, as defined in [run.properties](./kustomize/run/run.properties):
+Create the listener configuration to run the pipeline for a specific configuration, 
+as defined in [run.properties](./kustomize/run/run.properties), whenever a new
+commit is pushed to the `main` branch:
 ```bash
-cd kustomize/run
-kustomize edit set namesuffix $(( RANDOM % 100 ))
-cd ../..
 kustomize build kustomize/run | oc apply -f -
 ```
-The above will create the `PipelineRun` with a random name because these instances are immutable and cannot be updated after they were created.
 
 ## Uninstall
 Delete all the Tekton esources:
 ```bash
 oc delete pipelinerun --all
+kustomize build kustomize/run | oc delete -f -
 kustomize build kustomize/base | oc delete -f -
 ```
 
