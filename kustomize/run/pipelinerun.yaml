@@ -39,8 +39,6 @@ spec:
   params:
     - name: gitUrl
       value: __PLACEHOLDER_
-    - name: sshGitUrl
-      value: __PLACEHOLDER_
     - name: workflowId
       value: __PLACEHOLDER_
     - name: convertToFlat

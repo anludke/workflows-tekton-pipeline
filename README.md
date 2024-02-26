@@ -60,8 +60,7 @@ of the [config](./ssh/config) file
 
 | Name | Description | Default |
 |------|-------------|---------|
-|`gitUrl`|The https URL of the repository to clone|**provided**|
-|`sshGitUrl`|The SSH URL of the repository to clone|**provided**|
+|`gitUrl`|The SSH URL of the repository to clone|**provided**|
 |`workflowId`|The workflow ID from the repository (must match the folder name)|**provided**|
 |`convertToFlat`|Whether conversion to flat layout is needed or it's already flattened|`true`|
 
@@ -70,7 +69,6 @@ You can configure the execution parameters by changing the content of [run.prope
 ## Tekton Hub Tasks
 The following tasks are automatically installed and oatched by the installation procedure:
 * [git cli](https://hub.tekton.dev/tekton/task/git-cli)
-* [git clone](https://hub.tekton.dev/tekton/task/git-clone)
 * [kaniko](https://hub.tekton.dev/tekton/task/kaniko)
 
 ## Install
@@ -91,7 +89,7 @@ The above will create the `PipelineRun` with a random name because these instanc
 ## Uninstall
 Delete all the Tekton esources:
 ```bash
-kustomize build kustomize/run | oc delete -f -
+oc delete pipelinerun --all
 kustomize build kustomize/base | oc delete -f -
 ```
 
