@@ -94,14 +94,14 @@ spec:
   steps:
     - name: build-kustomize
       image: registry.access.redhat.com/ubi9-minimal
-      workingDir: $(workspaces.kustomize-template.path)
+      workingDir: $(workspaces.kustomize-template.path)/template
       script: |
         echo "--pwd"
         pwd
         echo "--ls"
         ls
-        echo "--ls .."
-        ls ..
+        echo "--ls ../.."
+        ls ../..
         cp $(workspaces.workflow-source.path)/flat/$(params.workflowId)/manifests/* kustomize/base
         echo "--ls kustomize/base"
         ls kustomize/base
