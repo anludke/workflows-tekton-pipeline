@@ -29,7 +29,11 @@ spec:
         TARGET=flat
         mkdir -p flat
         if [ "$(params.convertToFlat)" == "true" ]; then
-          cp -r workflow/$(params.workflowId)/src/main/resources flat/$(params.workflowId)
+          if [ -d "workflow/$(params.workflowId)" ]; then
+            cp -r workflow/$(params.workflowId)/src/main/resources flat/$(params.workflowId)
+          else
+            cp -r workflow/src/main/resources flat/$(params.workflowId)
+          fi
         else
           cp -r workflow/$(params.workflowId) flat/$(params.workflowId)
         fi
