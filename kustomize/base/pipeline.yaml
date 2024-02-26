@@ -64,7 +64,7 @@ spec:
           value: |
             eval "$(ssh-agent -s)"
             ssh-add "${PARAM_USER_HOME}"/.ssh/id_rsa
-            git clone git@github.com:parodos-dev/workflow-kustomize-template.git .
+            git clone git@github.com:parodos-dev/workflow-kustomize-template.git template
     - name: flatten-workflow
       runAfter: ["fetch-workflow"]
       taskRef:
