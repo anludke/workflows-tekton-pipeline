@@ -1,0 +1,104 @@
+# From https://github.com/parodos-dev/red-hat-developer-hub-software-templates/blob/tekton-demo/skeletons/tekton/tekton/eventlistener.yaml
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: __PLACEHOLDER__
+spec:
+  params:
+    - name: git-revision
+      description: The git revision
+      default: main
+    - name: git-repo-url
+      description: The repo url
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        # TODO: add workflow Id someway
+        name: pipeline-$(uid)
+        labels:
+          backstage.io/kubernetes-id: __PLACEHOLDER__
+      spec:
+        params:
+          - name: gitUrl
+            value: __PLACEHOLDER_
+          - name: workflowId
+            value: __PLACEHOLDER_
+          - name: convertToFlat
+            value: __PLACEHOLDER_
+        pipelineRef:
+          name: workflow-deployment
+        workspaces:
+          - name: workflow-source
+            volumeClaimTemplate:
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: 1Gi
+          - name: kustomize-template
+            volumeClaimTemplate:
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: 1Gi
+          - name: workflow-kustomize
+            volumeClaimTemplate:
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: 1Gi
+          - name: docker-credentials
+            secret:
+              secretName: docker-credentials
+          - name: ssh-creds
+            secret:
+              secretName: git-ssh-credentials
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: __PLACEHOLDER__
+spec:
+  triggers:
+    - bindings:
+        - kind: ClusterTriggerBinding
+          ref: github-push
+      interceptors:
+        - params:
+            - name: eventTypes
+              value: ["push"]
+          ref:
+            name: github
+        - params:
+            - name: filter
+              value: body.ref == 'refs/heads/main'
+          ref:
+            name: cel
+      template:
+        ref: __PLACEHOLDER__
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: __PLACEHOLDER__
+  labels:
+    app.kubernetes.io/managed-by: EventListener
+    app.kubernetes.io/part-of: Triggers
+    eventlistener: __PLACEHOLDER__
+spec:
+  to:
+    kind: Service
+    name: __PLACEHOLDER__
+    weight: 100
+  port:
+    targetPort: http-listener
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge

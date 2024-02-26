@@ -9,24 +9,45 @@ replacements:
       fieldPath: data.workflowId
     targets:
       - select:
-          kind: PipelineRun
+          kind: TriggerTemplate
         fieldPaths:
-          - spec.params.[name=workflowId].value
+          - spec.resourcetemplates.0.spec.params.[name=workflowId].value
+          - spec.resourcetemplates.0.metadata.labels.[backstage.io/kubernetes-id]
+          - metadata.name
+      - select:
+          kind: EventListener
+        fieldPaths:
+          - metadata.name
+          - spec.triggers.0.template.ref
+      - select:
+          kind: Route
+        fieldPaths:
+          - metadata.name
+          - metadata.labels.eventlistener
+  - source:
+      kind: ConfigMap
+      name: pipelinerun-properties
+      fieldPath: data.workflowId-listener
+    targets:
+      - select:
+         kind: Route
+        fieldPaths:
+          - spec.to.name
   - source:
       kind: ConfigMap
       name: pipelinerun-properties
       fieldPath: data.gitUrl
     targets:
       - select:
-          kind: PipelineRun
+          kind: TriggerTemplate
         fieldPaths:
-          - spec.params.[name=gitUrl].value
+          - spec.resourcetemplates.0.spec.params.[name=gitUrl].value
   - source:
       kind: ConfigMap
       name: pipelinerun-properties
       fieldPath: data.convertToFlat
     targets:
       - select:
-          kind: PipelineRun
+          kind: TriggerTemplate
         fieldPaths:
-          - spec.params.[name=convertToFlat].value
+          - spec.resourcetemplates.0.spec.params.[name=convertToFlat].value
