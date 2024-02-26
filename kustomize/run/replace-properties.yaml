@@ -24,15 +24,6 @@ replacements:
   - source:
       kind: ConfigMap
       name: pipelinerun-properties
-      fieldPath: data.sshGitUrl
-    targets:
-      - select:
-          kind: PipelineRun
-        fieldPaths:
-          - spec.params.[name=sshGitUrl].value
-  - source:
-      kind: ConfigMap
-      name: pipelinerun-properties
       fieldPath: data.convertToFlat
     targets:
       - select:

@@ -8,9 +8,6 @@ spec:
     pushes it to a registry
   params:
     - name: gitUrl
-      description: The https URL of the repository to clone
-      type: string
-    - name: sshGitUrl
       description: The SSH URL of the repository to clone
       type: string
     - name: workflowId
@@ -29,24 +26,45 @@ spec:
   tasks:
     - name: fetch-workflow
       taskRef:
-        name: git-clone
+        name: git-cli
       workspaces:
-        - name: output
+        - name: source
           workspace: workflow-source
+        - name: ssh-directory
+          workspace: ssh-creds
       params:
-        - name: url
-          value: $(params.gitUrl)
-        - name: subdirectory
-          value: workflow
+        - name: GIT_USER_NAME
+          value: Parodos Tekton Pipeline
+        - name: GIT_USER_EMAIL
+          value: parodos@redhat.com
+        - name: USER_HOME
+          value: /home/git
+        - name: GIT_SCRIPT
+          value: |
+            eval "$(ssh-agent -s)"
+            ssh-add "${PARAM_USER_HOME}"/.ssh/id_rsa
+            git clone $(params.gitUrl) workflow
+            cd workflow
     - name: fetch-kustomize-template
       taskRef:
-        name: git-clone
+        name: git-cli
       workspaces:
-        - name: output
+        - name: source
           workspace: kustomize-template
+        - name: ssh-directory
+          workspace: ssh-creds
       params:
-        - name: url
-          value: https://github.com/parodos-dev/workflow-kustomize-template.git
+        - name: GIT_USER_NAME
+          value: Parodos Tekton Pipeline
+        - name: GIT_USER_EMAIL
+          value: parodos@redhat.com
+        - name: USER_HOME
+          value: /home/git
+        - name: GIT_SCRIPT
+          value: |
+            eval "$(ssh-agent -s)"
+            ssh-add "${PARAM_USER_HOME}"/.ssh/id_rsa
+            git clone git@github.com:parodos-dev/workflow-kustomize-template.git .
     - name: flatten-workflow
       runAfter: ["fetch-workflow"]
       taskRef:
@@ -123,7 +141,7 @@ spec:
             ssh-add "${PARAM_USER_HOME}"/.ssh/id_rsa
 
             git config --global --add safe.directory /workspace/source/workflow
-            git clone $(params.sshGitUrl) workflow
+            git clone $(params.gitUrl) workflow
             cd workflow
 
             COMMIT=$(git rev-parse --short=8 HEAD)
