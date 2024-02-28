@@ -24,6 +24,10 @@ replacements:
         fieldPaths:
           - metadata.name
           - metadata.labels.eventlistener
+      - select:
+          kind: PipelineRun
+        fieldPaths:
+          - spec.params.[name=workflowId].value
   - source:
       kind: ConfigMap
       name: pipelinerun-properties
@@ -42,6 +46,23 @@ replacements:
           kind: TriggerTemplate
         fieldPaths:
           - spec.resourcetemplates.0.spec.params.[name=gitUrl].value
+      - select:
+          kind: PipelineRun
+        fieldPaths:
+          - spec.params.[name=gitUrl].value
+  - source:
+      kind: ConfigMap
+      name: pipelinerun-properties
+      fieldPath: data.gitConfigUrl
+    targets:
+      - select:
+          kind: TriggerTemplate
+        fieldPaths:
+          - spec.resourcetemplates.0.spec.params.[name=gitConfigUrl].value
+      - select:
+          kind: PipelineRun
+        fieldPaths:
+          - spec.params.[name=gitConfigUrl].value
   - source:
       kind: ConfigMap
       name: pipelinerun-properties
@@ -51,3 +72,7 @@ replacements:
           kind: TriggerTemplate
         fieldPaths:
           - spec.resourcetemplates.0.spec.params.[name=convertToFlat].value
+      - select:
+          kind: PipelineRun
+        fieldPaths:
+          - spec.params.[name=convertToFlat].value

@@ -10,6 +10,9 @@ spec:
     - name: gitUrl
       description: The SSH URL of the repository to clone
       type: string
+    - name: gitConfigUrl
+      description: The SSH URL of the config repository for pushing the changes
+      type: string
     - name: workflowId
       description: The workflow ID from the repository
       type: string
@@ -19,8 +22,7 @@ spec:
       default: "true"
   workspaces:
     - name: workflow-source
-    - name: kustomize-template
-    - name: workflow-kustomize
+    - name: workflow-config
     - name: ssh-creds
     - name: docker-credentials
   tasks:
@@ -45,12 +47,12 @@ spec:
             ssh-add "${PARAM_USER_HOME}"/.ssh/id_rsa
             git clone $(params.gitUrl) workflow
             cd workflow
-    - name: fetch-kustomize-template
+    - name: fetch-workflow-config
       taskRef:
         name: git-cli
       workspaces:
         - name: source
-          workspace: kustomize-template
+          workspace: workflow-config
         - name: ssh-directory
           workspace: ssh-creds
       params:
@@ -64,7 +66,7 @@ spec:
           value: |
             eval "$(ssh-agent -s)"
             ssh-add "${PARAM_USER_HOME}"/.ssh/id_rsa
-            git clone git@github.com:parodos-dev/workflow-kustomize-template.git template
+            git clone $(params.gitConfigUrl) workflow-config
     - name: flatten-workflow
       runAfter: ["fetch-workflow"]
       taskRef:
@@ -87,17 +89,15 @@ spec:
       params:
         - name: workflowId
           value: $(params.workflowId)
-    - name: build-kustomize
-      runAfter: ["build-manifests", "fetch-kustomize-template"]
+    - name: build-config
+      runAfter: ["build-manifests", "fetch-workflow-config"]
       taskRef:
-        name: build-kustomize
+        name: build-config
       workspaces:
         - name: workflow-source
           workspace: workflow-source
-        - name: kustomize-template
-          workspace: kustomize-template
-        - name: workflow-kustomize
-          workspace: workflow-kustomize
+        - name: workflow-config
+          workspace: workflow-config
       params:
         - name: workflowId
           value: $(params.workflowId)
@@ -119,13 +119,13 @@ spec:
           value: flat/workflow-builder.Dockerfile
         - name: CONTEXT
           value: flat/$(params.workflowId)
-    - name: push-workflow-kustomize
-      runAfter: ["build-kustomize", "build-and-push-image"]
+    - name: push-workflow-config
+      runAfter: ["build-config", "build-and-push-image"]
       taskRef:
         name: git-cli
       workspaces:
         - name: source
-          workspace: workflow-kustomize
+          workspace: workflow-config
         - name: ssh-directory
           workspace: ssh-creds
       params:
@@ -137,25 +137,23 @@ spec:
           value: /home/git
         - name: GIT_SCRIPT
           value: |
+            WORKFLOW_COMMIT=$(tasks.fetch-workflow.results.commit)
+            echo "WORKFLOW_COMMIT is $WORKFLOW_COMMIT"
+
             eval "$(ssh-agent -s)"
             ssh-add "${PARAM_USER_HOME}"/.ssh/id_rsa
 
-            git config --global --add safe.directory /workspace/source/workflow
-            git clone $(params.gitUrl) workflow
-            cd workflow
-
-            COMMIT=$(git rev-parse --short=8 HEAD)
-            TIMESTAMP=$(date +"%Y-%m-%d_%H-%M")
-            BRANCH="deployment-$TIMESTAMP"
-            git checkout -b "$BRANCH"
-            git branch --set-upstream-to=origin/main "$BRANCH"
+            # git config --global --add safe.directory /workspace/source/workflow
+            # git clone $(params.gitUrl) workflow
+            cd workflow-config
+            git add .
+            echo "--git status"
             git status
-            git config --global --list
-            git push -u origin "$BRANCH"
-
-            rm -rf kustomize
-            cp -R ../kustomize .
-            git add kustomize
-            git commit -m "Deployment for $COMMIT"
-            git push origin "$BRANCH"
+            echo "--git diff"
+            git diff
+            # git config --global --list
+            # TODO: create PR
+            git commit -m "Deployment for workflow commit $WORKFLOW_COMMIT from $(params.gitUrl)"
+            # TODO: parametrize branch
+            git push origin main
 ---

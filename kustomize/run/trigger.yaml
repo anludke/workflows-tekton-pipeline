@@ -23,6 +23,8 @@ spec:
         params:
           - name: gitUrl
             value: __PLACEHOLDER_
+          - name: gitConfigUrl
+            value: __PLACEHOLDER_
           - name: workflowId
             value: __PLACEHOLDER_
           - name: convertToFlat
@@ -38,15 +40,7 @@ spec:
                 resources:
                   requests:
                     storage: 1Gi
-          - name: kustomize-template
-            volumeClaimTemplate:
-              spec:
-                accessModes:
-                  - ReadWriteOnce
-                resources:
-                  requests:
-                    storage: 1Gi
-          - name: workflow-kustomize
+          - name: workflow-config
             volumeClaimTemplate:
               spec:
                 accessModes:

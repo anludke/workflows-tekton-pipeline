@@ -78,13 +78,12 @@ spec:
 apiVersion: tekton.dev/v1
 kind: Task
 metadata:
-  name: build-kustomize
+  name: build-config
   namespace: sonataflow-infra
 spec:
   workspaces:
     - name: workflow-source
-    - name: kustomize-template
-    - name: workflow-kustomize
+    - name: workflow-config
   params:
     - name: workflowId
       description: The workflow ID from the repository
@@ -92,9 +91,9 @@ spec:
     - name: imageTag
       type: string
   steps:
-    - name: build-kustomize
+    - name: build-config
       image: registry.access.redhat.com/ubi9-minimal
-      workingDir: $(workspaces.kustomize-template.path)/template
+      workingDir: $(workspaces.workflow-config.path)/workflow-config
       script: |
         echo "--pwd"
         pwd
@@ -107,11 +106,4 @@ spec:
         ls kustomize/base
         microdnf install -y findutils && microdnf clean all
         ./updater.sh $(params.workflowId) $(params.imageTag)
-
-        cp -R kustomize $(workspaces.workflow-kustomize.path)
-
-        echo "--cat $(workspaces.workflow-kustomize.path)/kustomize/base/kustomization.yaml"
-        cat $(workspaces.workflow-kustomize.path)/kustomize/base/kustomization.yaml
-        echo "--ls $(workspaces.workflow-kustomize.path)/kustomize/base"
-        ls $(workspaces.workflow-kustomize.path)/kustomize/base
 ---

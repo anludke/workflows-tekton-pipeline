@@ -1,8 +1,7 @@
 
 # Tekton pipeline to build and deploy Serverless Workflows
 * Builds the containerized image of a given serverless workflow (identified by git URL)
-* Generates the deployment manifests and a base kustomize project to install it and pushes them on a new branch of the 
-  source repository
+* Generates the deployment manifests and a base kustomize project to install it on the given configuration repository 
 
 Actual deployment requires manual operation to define the configuration variables and to install using `kustomize`
 
@@ -61,6 +60,7 @@ of the [config](./ssh/config) file
 | Name | Description | Default |
 |------|-------------|---------|
 |`gitUrl`|The SSH URL of the repository to clone|**provided**|
+|`gitConfigUrl`|The SSH URL of the config repository to clone and update|**provided**|
 |`workflowId`|The workflow ID from the repository (must match the folder name)|**provided**|
 |`workflowId-listener`|**WILL BE AUTOMATED** The name of the `Service` for the created `EventListener`|**provided**, must be like `el-<workflowId>`|
 |`convertToFlat`|Whether conversion to flat layout is needed or it's already flattened|`true`|

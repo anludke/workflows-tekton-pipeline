@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
-  name: workflow-deployment-run-
+  name: workflow-deployment-run
 spec:
   pipelineRef:
     name: workflow-deployment
@@ -14,15 +14,7 @@ spec:
           resources:
             requests:
               storage: 1Gi
-    - name: kustomize-template
-      volumeClaimTemplate:
-        spec:
-          accessModes:
-            - ReadWriteOnce
-          resources:
-            requests:
-              storage: 1Gi
-    - name: workflow-kustomize
+    - name: workflow-config
       volumeClaimTemplate:
         spec:
           accessModes:
@@ -38,6 +30,8 @@ spec:
         secretName: git-ssh-credentials
   params:
     - name: gitUrl
+      value: __PLACEHOLDER_
+    - name: gitConfigUrl
       value: __PLACEHOLDER_
     - name: workflowId
       value: __PLACEHOLDER_
