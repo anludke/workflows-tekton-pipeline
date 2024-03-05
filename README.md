@@ -68,9 +68,8 @@ of the [config](./ssh/config) file
 You can configure the execution parameters by changing the content of [run.properties](./kustomize/run/run.properties).
 
 ## Tekton Hub Tasks
-The following tasks are automatically installed and oatched by the installation procedure:
+The following task is automatically installed and patched by the installation procedure:
 * [git cli](https://hub.tekton.dev/tekton/task/git-cli)
-* [kaniko](https://hub.tekton.dev/tekton/task/kaniko)
 
 ## Install
 Deploy the required Tekton tasks and pipeline:
